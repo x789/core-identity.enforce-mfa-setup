@@ -33,7 +33,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
-
+app.UseMiddleware<EnforceMfaMiddleware>();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
