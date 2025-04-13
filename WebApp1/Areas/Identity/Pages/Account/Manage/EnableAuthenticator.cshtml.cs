@@ -18,8 +18,9 @@ using QRCoder;
 namespace WebApp1.Areas.Identity.Pages.Account.Manage
 {
     public class EnableAuthenticatorModel : PageModel
-    {
-        private readonly UserManager<IdentityUser> _userManager;
+	{
+		private readonly SignInManager<IdentityUser> _signInManager;
+		private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<EnableAuthenticatorModel> _logger;
         private readonly UrlEncoder _urlEncoder;
 
@@ -27,11 +28,13 @@ namespace WebApp1.Areas.Identity.Pages.Account.Manage
 
         public EnableAuthenticatorModel(
             UserManager<IdentityUser> userManager,
-            ILogger<EnableAuthenticatorModel> logger,
+            SignInManager<IdentityUser> signInManager,
+			ILogger<EnableAuthenticatorModel> logger,
             UrlEncoder urlEncoder)
         {
             _userManager = userManager;
-            _logger = logger;
+			_signInManager = signInManager;
+			_logger = logger;
             _urlEncoder = urlEncoder;
         }
         
@@ -136,7 +139,9 @@ namespace WebApp1.Areas.Identity.Pages.Account.Manage
 
             StatusMessage = "Your authenticator app has been verified.";
 
-            if (await _userManager.CountRecoveryCodesAsync(user) == 0)
+			await _signInManager.SignOutAsync();
+
+			if (await _userManager.CountRecoveryCodesAsync(user) == 0)
             {
                 var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
                 RecoveryCodes = recoveryCodes.ToArray();
