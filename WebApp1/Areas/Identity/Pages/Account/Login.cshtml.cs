@@ -19,11 +19,13 @@ namespace WebApp1.Areas.Identity.Pages.Account
 {
     public class LoginModel : PageModel
     {
+        private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
         {
+            _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
         }
@@ -115,7 +117,20 @@ namespace WebApp1.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
+
+					var user = await _userManager.FindByNameAsync(Input.Email);
+					var claims = await _userManager.GetClaimsAsync(user);
+					var claim = claims.FirstOrDefault(c => c.Type == "enforceMfa");
+					var mfaIsRequired = claim is not null && claim.Value == "true";
+					if (mfaIsRequired)
+					{
+						// MFA is required but was not used to log in. Redirect user to setup.
+						return RedirectToPage("./Manage/EnableAuthenticator");
+					}
+					else
+					{
+						return LocalRedirect(returnUrl);
+					}
                 }
                 if (result.RequiresTwoFactor)
                 {
