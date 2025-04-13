@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using QRCoder;
 
 namespace WebApp1.Areas.Identity.Pages.Account.Manage
 {
@@ -33,12 +34,17 @@ namespace WebApp1.Areas.Identity.Pages.Account.Manage
             _logger = logger;
             _urlEncoder = urlEncoder;
         }
-
+        
         /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public string SharedKey { get; set; }
+		/// QR code for authenticator setup encoded as base64 PNG
+		/// </summary>
+        public string AuthenticatorQrCodeAsBase64 { get; set; }
+
+		/// <summary>
+		///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+		///     directly from your code. This API may change or be removed in future releases.
+		/// </summary>
+		public string SharedKey { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -156,7 +162,12 @@ namespace WebApp1.Areas.Identity.Pages.Account.Manage
 
             var email = await _userManager.GetEmailAsync(user);
             AuthenticatorUri = GenerateQrCodeUri(email, unformattedKey);
-        }
+
+			var qrGenerator = new QRCodeGenerator();
+			var qrCodeData = qrGenerator.CreateQrCode(AuthenticatorUri, QRCodeGenerator.ECCLevel.Q);
+			var qrCode = new PngByteQRCode(qrCodeData);
+			AuthenticatorQrCodeAsBase64 = Convert.ToBase64String(qrCode.GetGraphic(5));
+		}
 
         private string FormatKey(string unformattedKey)
         {
